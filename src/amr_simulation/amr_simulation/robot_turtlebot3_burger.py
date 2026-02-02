@@ -24,6 +24,8 @@ class TurtleBot3Burger(Robot):
         Robot.__init__(self, sim=sim, track=self.TRACK, wheel_radius=self.WHEEL_RADIUS)
         self._dt: float = dt
         self._motors: dict[str, int] = self._init_motors()
+        self._last_right: float = 0.0
+        self._last_left: float = 0.0
 
     def move(self, v: float, w: float) -> None:
         """Solve inverse differential kinematics and send commands to the motors.
@@ -38,7 +40,15 @@ class TurtleBot3Burger(Robot):
 
         """
         # TODO: 2.1. Complete the function body with your code (i.e., replace the pass statement).
-        pass
+        angular_vel_left = (v - w*self.TRACK/2) / self.WHEEL_RADIUS
+        angular_vel_right = (v + w*self.TRACK/2) / self.WHEEL_RADIUS
+        if angular_vel_left <  self.WHEEL_SPEED_MAX  and angular_vel_right < self.WHEEL_SPEED_MAX :
+            self._last_right = angular_vel_right
+            self._last_left = angular_vel_left
+        self._sim.setJointTargetVelocity(self._motors["left"], self._last_left)
+        self._sim.setJointTargetVelocity(self._motors["right"], self._last_right)
+        
+
 
     def sense(self) -> tuple[list[float], float, float]:
         """Read the LiDAR and the encoders.
@@ -91,9 +101,12 @@ class TurtleBot3Burger(Robot):
         )
 
         # TODO: 2.2. Compute the derivatives of the angular positions to obtain velocities [rad/s].
+        wr = encoders["right"] / self._dt
+        wl = encoders["left"] / self._dt
+
 
         # TODO: 2.3. Solve forward differential kinematics (i.e., calculate z_v and z_w).
-        z_v = 0.0
-        z_w = 0.0
+        z_v = (wr + wl) * self.WHEEL_RADIUS / 2
+        z_w = (wr - wl) * self.WHEEL_RADIUS / self.TRACK
 
         return z_v, z_w
