@@ -92,7 +92,9 @@ class PRMNode(LifecycleNode):
 
             # Publishers
             # TODO: 4.6. Create the /path publisher (Path message).
-            
+            self._path_publisher = self.create_publisher(
+                Path, topic="path", qos_profile=10 
+            )
             # Subscribers
             self._subscriber_pose = self.create_subscription(
                 AmrPoseStamped, "pose", self._path_callback, 10
@@ -157,7 +159,18 @@ class PRMNode(LifecycleNode):
 
         """
         # TODO: 4.7. Complete the function body with your code (i.e., replace the pass statement).
-        pass
+        new_msg = Path()
+        new_msg.header = self.get_clock().now().to_msg()
+        poses_list = []
+        
+        for p in path:
+            pose = PoseStamped()
+            pose.position.x = p[0]
+            pose.position.y = p[1]
+            poses_list.append(pose)
+
+        new_msg.poses = poses_list 
+        self._path_publisher.publish(new_msg)
         
 
 def main(args=None):

@@ -92,37 +92,35 @@ class PRM:
         if start in self._graph:
             start_in_graph = True
             start_node = start
+        else:
+            start_in_graph = False
+            start_node = min(
+                self._graph.keys(),
+                key=lambda p: math.dist(p, start),
+            )
+            self._graph[start_node] = []
+            self._connect_nodes(graph=self._graph)
 
-        goal_in_graph = False
         if goal in self._graph:
             goal_in_graph = True
             goal_node = goal
-
-        if not start_in_graph or not goal_in_graph:    
-            start_x, start_y = start
-            closest_dist_goal = np.inf
-            closest_dist_start = np.inf
-            for x1, y1 in self._graph.keys():
-                dist = np.sqrt((x1-start_x)**2 + (y1-start_y)**2)
-                if dist < closest_dist_start and not start_in_graph:
-                    closest_dist_start = dist
-                    start_node = (x1, y1)
-                if dist < closest_dist_goal and not goal_in_graph:
-                    closest_dist_goal = dist
-                    goal_node = (x1, y1)
-
+        else:
+            goal_in_graph = False
+            goal_node = min(
+                self._graph.keys(),
+                key=lambda p: math.dist(p, goal),
+            )
+            self._graph[goal_node] = []
+            self._connect_nodes(graph=self._graph)
 
         # h = heuristica (distancia euclídea)
-        #(f,g) f = h + g, g numero de pasos acumulados
-        open_list = {start_node: (math.dist(start_node, goal_node), 0)} 
-        closed_list = set() 
-        while True: # open_list
-            if not open_list:
-                print(current_node)
-                raise Exception("Open list is empty.")
-
+        # (f,g) f = h + g, g numero de pasos acumulados
+        open_list = {start_node: (math.dist(start_node, goal_node), 0)}
+        closed_list = set()
+        while open_list:
             current_node = min(open_list, key=lambda k: open_list.get(k)[0])
             _, g = open_list[current_node]
+
             open_list.pop(current_node)
             closed_list.add(current_node)
 
@@ -130,18 +128,19 @@ class PRM:
                 if not start_in_graph:
                     ancestors[start_node] = start
                 if not goal_in_graph:
-                    ancestors[goal] = goal_node # current_node
-                return self._reconstruct_path(start, goal)
+                    ancestors[goal] = goal_node
+                return self._reconstruct_path(start, goal, ancestors)
 
             for neighbour in self._graph[current_node]:
-                if neighbour not in open_list and neighbour not in closed_list:
-                    g_new = g + math.dist(neighbour, current_node)  
-                    f_new = g_new + math.dist(goal_node, neighbour)  
+                g_new = g + math.dist(neighbour, current_node)
+                if (
+                    neighbour not in open_list or g_new < open_list[neighbour][-1]
+                ) and neighbour not in closed_list:
+                    f_new = g_new + math.dist(goal_node, neighbour)
                     open_list[neighbour] = (f_new, g_new)
                     ancestors[neighbour] = current_node
-        
 
-
+        raise Exception("Open list is empty.")
 
     @staticmethod
     def smooth_path(
@@ -166,15 +165,47 @@ class PRM:
 
         """
         # TODO: 4.5. Complete the function body (i.e., load smoothed_path).
-        smoothed_path: list[tuple[float, float]] = []
-        # smoothed_path.append(path[0])
-        # while iter_error > tolerance:
-        #     iter_error = 0.0
-        #     for si in path[1:-1]:
-        #         si = si + data_weight*(pi - si) + smooth_weight*(si_next + si_last - 2*si)
+
+        expanded_path: list[tuple[float, float]] = []
+
+        if additional_smoothing_points:    
+            for i in range(len(path) - 1):
+                p1 = np.array(path[i], dtype=float)
+                p2 = np.array(path[i + 1], dtype=float)
+
+                expanded_path.append((float(p1[0]), float(p1[1])))
+
+                for j in range(1, additional_smoothing_points + 1):
+                    alpha = j / (additional_smoothing_points + 1)
+                    p = (1 - alpha) * p1 + alpha * p2
+                    expanded_path.append((float(p[0]), float(p[1])))
+
+            expanded_path.append(path[-1])
+
+            path = expanded_path
+
+        original = [np.array(p, dtype=float) for p in path]
+        smoothed = [np.array(p, dtype=float) for p in path]
             
-        # smoothed_path.append(path[-1])
-        return smoothed_path
+
+
+        iter_error = np.inf
+
+        while iter_error > tolerance:
+            iter_error = 0.0
+
+            for i in range(1, len(path) - 1):
+                old_point = smoothed[i].copy()
+
+                smoothed[i] = (
+                    smoothed[i]
+                    + data_weight * (original[i] - smoothed[i])
+                    + smooth_weight * (smoothed[i + 1] + smoothed[i - 1] - 2 * smoothed[i])
+                )
+
+                iter_error += np.sum(np.abs(smoothed[i] - old_point))
+
+        return [(float(p[0]), float(p[1])) for p in smoothed]
 
     def plot(
         self,
@@ -296,11 +327,11 @@ class PRM:
 
         """
         # TODO: 4.2. Complete the missing function body with your code.
-        for x1,y1 in graph.keys():
+        for x1, y1 in graph.keys():
             for x2, y2 in graph.keys():
-                if np.sqrt((x1-x2)**2 + (y1-y2)**2) < connection_distance:
-                    if self._map.crosses([(x1,y1), (x2,y2)]):
-                        graph[(x1,y1)].append((x2,y2))
+                if np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) < connection_distance:
+                    if not self._map.crosses([(x1, y1), (x2, y2)]):
+                        graph[(x1, y1)].append((x2, y2))
         return graph
 
     def _create_graph(
@@ -350,19 +381,19 @@ class PRM:
         if use_grid:
             for x in np.arange(xmin, xmax, grid_size):
                 for y in np.arange(ymin, ymax, grid_size):
-                    if self._map.contains((x,y)):
+                    if self._map.contains((x, y)):
                         x = np.round(float(x), 2)
                         y = np.round(float(y), 2)
-                        graph[(x,y)] = [] # (None, None)
+                        graph[(x, y)] = []  # (None, None)
         else:
             nodes_added = 0
             while nodes_added < node_count:
                 x_candidate = np.random.uniform(xmin, xmax)
                 y_candidate = np.random.uniform(ymin, ymax)
-                if self._map.contains((x_candidate,y_candidate)):
+                if self._map.contains((x_candidate, y_candidate)):
                     x = np.round(float(x), 2)
                     y = np.round(float(y), 2)
-                    graph[(x_candidate,y_candidate)] = [] # (None, None)
+                    graph[(x_candidate, y_candidate)] = []  # (None, None)
                     nodes_added += 1
         return graph
 
@@ -389,7 +420,7 @@ class PRM:
         current_node = goal
         while current_node != start:
             path.append(current_node)
-            current_node = self.ancestors[current_node]
+            current_node = ancestors[current_node]
         path.append(start)
         path.reverse()
         return path

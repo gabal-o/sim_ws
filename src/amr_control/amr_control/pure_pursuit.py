@@ -1,3 +1,4 @@
+import math
 class PurePursuit:
     """Class to follow a path using a simple pure pursuit controller."""
 
@@ -39,7 +40,15 @@ class PurePursuit:
         # TODO: 4.11. Complete the function body with your code (i.e., compute v and w).
         v = 0.0
         w = 0.0
-        
+        current_point, current_index = self._find_closest_point(float(x), float(y))
+        xl, yl = self._find_target_point(current_point, current_index)
+        beta = math.atan2((yl-y)/(xl-x))
+        alpha = beta - theta
+        if abs(math.sin(alpha)) > 0.2:
+            # error = self._lookahead_distance * math.sin(alpha)
+            v = 
+        else:
+            w = 5.0
         return v, w
 
     @property
@@ -65,8 +74,11 @@ class PurePursuit:
 
         """
         # TODO: 4.9. Complete the function body (i.e., find closest_xy and closest_idx).
-        closest_xy = (0.0, 0.0)
-        closest_idx = 0
+        closest_xy = min(
+                self._path,
+                key=lambda p: math.dist(p, (x,y)),
+            )
+        closest_idx = self._path.index(closest_xy)
 
         return closest_xy, closest_idx
         
@@ -84,7 +96,12 @@ class PurePursuit:
 
         """
         # TODO: 4.10. Complete the function body with your code (i.e., determine target_xy).
-        target_xy = (0.0, 0.0)
+        
+        target_point_idx = None
 
-        return target_xy
+        for i in range(origin_idx, len(self._path)):
+            if math.dist(origin_xy, self.path[i]) >= self._lookahead_distance:
+                target_point_idx = i
+                break
+        return self.path[target_point_idx]
         
