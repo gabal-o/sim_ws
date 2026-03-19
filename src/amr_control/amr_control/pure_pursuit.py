@@ -40,15 +40,19 @@ class PurePursuit:
         # TODO: 4.11. Complete the function body with your code (i.e., compute v and w).
         v = 0.0
         w = 0.0
+        if not self._path:
+            return v, w
         current_point, current_index = self._find_closest_point(float(x), float(y))
         xl, yl = self._find_target_point(current_point, current_index)
         beta = math.atan2((yl-y)/(xl-x))
         alpha = beta - theta
         if abs(math.sin(alpha)) > 0.2:
-            # error = self._lookahead_distance * math.sin(alpha)
-            v = 
+            v = 0.15    # Hemos asumido que tenemos un grado de libertad
+            w = (2 * v * math.sin(alpha)) / self._lookahead_distance
         else:
-            w = 5.0
+            w = 4.0
+        if alpha > math.radians(20):
+            w = 0.1
         return v, w
 
     @property

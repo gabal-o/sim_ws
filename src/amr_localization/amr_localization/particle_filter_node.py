@@ -100,6 +100,7 @@ class ParticleFilterNode(LifecycleNode):
                 topic="pose",
                 qos_profile=10
             )
+            
 
             # Subscribers
             scan_qos_profile = QoSProfile(
