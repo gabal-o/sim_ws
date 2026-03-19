@@ -108,8 +108,10 @@ class PurePursuitNode(LifecycleNode):
 
         """
         # TODO: 4.8. Complete the function body with your code (i.e., replace the pass statement).
-        self._pure_pursuit.path = path_msg.poses
-        
+        self._pure_pursuit.path = [
+            (pose.pose.position.x, pose.pose.position.y) for pose in path_msg.poses
+        ]
+
     def _publish_velocity_commands(self, v: float, w: float) -> None:
         """Publishes velocity commands in a geometry_msgs.msg.TwistStamped message.
 

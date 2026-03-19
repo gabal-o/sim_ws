@@ -1,4 +1,6 @@
 import math
+
+
 class PurePursuit:
     """Class to follow a path using a simple pure pursuit controller."""
 
@@ -23,7 +25,7 @@ class PurePursuit:
         self._lookahead_distance: float = lookahead_distance
         self._path: list[tuple[float, float]] = []
         self._simulation: bool = simulation
-        
+
     def compute_commands(self, x: float, y: float, theta: float) -> tuple[float, float]:
         """Pure pursuit controller implementation.
 
@@ -44,15 +46,15 @@ class PurePursuit:
             return v, w
         current_point, current_index = self._find_closest_point(float(x), float(y))
         xl, yl = self._find_target_point(current_point, current_index)
-        beta = math.atan2((yl-y)/(xl-x))
+        beta = math.atan2((yl - y), (xl - x))
         alpha = beta - theta
-        if abs(math.sin(alpha)) > 0.2:
-            v = 0.15    # Hemos asumido que tenemos un grado de libertad
-            w = (2 * v * math.sin(alpha)) / self._lookahead_distance
-        else:
-            w = 4.0
-        if alpha > math.radians(20):
-            w = 0.1
+        # if abs(math.sin(alpha)) > 0.2:
+        v = 0.1  # Hemos asumido que tenemos un grado de libertad
+        w = (2 * v * math.sin(alpha)) / self._lookahead_distance
+        # else:
+        #     w = 2.0
+        # if abs(alpha) > math.radians(20):
+        #     w = 0.1
         return v, w
 
     @property
@@ -64,7 +66,7 @@ class PurePursuit:
     def path(self, value: list[tuple[float, float]]) -> None:
         """Path setter."""
         self._path = value
-        
+
     def _find_closest_point(self, x: float, y: float) -> tuple[tuple[float, float], int]:
         """Find the closest path point to the current robot pose.
 
@@ -79,13 +81,13 @@ class PurePursuit:
         """
         # TODO: 4.9. Complete the function body (i.e., find closest_xy and closest_idx).
         closest_xy = min(
-                self._path,
-                key=lambda p: math.dist(p, (x,y)),
-            )
+            self._path,
+            key=lambda p: math.dist(p, (x, y)),
+        )
         closest_idx = self._path.index(closest_xy)
 
         return closest_xy, closest_idx
-        
+
     def _find_target_point(
         self, origin_xy: tuple[float, float], origin_idx: int
     ) -> tuple[float, float]:
@@ -100,12 +102,11 @@ class PurePursuit:
 
         """
         # TODO: 4.10. Complete the function body with your code (i.e., determine target_xy).
-        
-        target_point_idx = None
+
+        target_point_idx = -1
 
         for i in range(origin_idx, len(self._path)):
             if math.dist(origin_xy, self.path[i]) >= self._lookahead_distance:
                 target_point_idx = i
                 break
         return self.path[target_point_idx]
-        

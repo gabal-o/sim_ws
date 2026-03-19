@@ -160,13 +160,13 @@ class PRMNode(LifecycleNode):
         """
         # TODO: 4.7. Complete the function body with your code (i.e., replace the pass statement).
         new_msg = Path()
-        new_msg.header = self.get_clock().now().to_msg()
+        new_msg.header.stamp = self.get_clock().now().to_msg()
         poses_list = []
         
         for p in path:
             pose = PoseStamped()
-            pose.position.x = p[0]
-            pose.position.y = p[1]
+            pose.pose.position.x = p[0]
+            pose.pose.position.y = p[1]
             poses_list.append(pose)
 
         new_msg.poses = poses_list 
