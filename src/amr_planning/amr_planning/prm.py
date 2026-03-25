@@ -86,8 +86,7 @@ class PRM:
             raise ValueError("Goal location is outside the environment.")
 
         ancestors: dict[tuple[float, float], tuple[float, float]] = {}  # {(x, y: (x_prev, y_prev)}
-        # TODO: 4.3. Complete the function body (i.e., replace the code below).
-        # path: list[tuple[float, float]] = []
+        # TODO: 4.3. Complete the function body (i.e., replace the code below).]
         start_in_graph = False
         if start in self._graph:
             start_in_graph = True
