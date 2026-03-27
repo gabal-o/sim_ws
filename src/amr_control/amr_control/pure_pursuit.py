@@ -48,13 +48,10 @@ class PurePursuit:
         xl, yl = self._find_target_point(current_point, current_index)
         beta = math.atan2((yl - y), (xl - x))
         alpha = beta - theta
-        # if abs(math.sin(alpha)) > 0.2:
+
         v = 0.1  # Hemos asumido que tenemos un grado de libertad
         w = (2 * v * math.sin(alpha)) / self._lookahead_distance
-        # else:
-        #     w = 2.0
-        # if abs(alpha) > math.radians(20):
-        #     w = 0.1
+
         return v, w
 
     @property

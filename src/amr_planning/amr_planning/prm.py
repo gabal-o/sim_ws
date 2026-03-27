@@ -98,7 +98,7 @@ class PRM:
                 key=lambda p: math.dist(p, start),
             )
             self._graph[start_node] = []
-            self._connect_nodes(graph=self._graph)
+            self._connect_nodes(graph=self._graph, connection_distance=self._connection_distance)
 
         if goal in self._graph:
             goal_in_graph = True
@@ -390,9 +390,9 @@ class PRM:
                 x_candidate = np.random.uniform(xmin, xmax)
                 y_candidate = np.random.uniform(ymin, ymax)
                 if self._map.contains((x_candidate, y_candidate)):
-                    x = np.round(float(x), 2)
-                    y = np.round(float(y), 2)
-                    graph[(x_candidate, y_candidate)] = []  # (None, None)
+                    x = np.round(float(x_candidate), 2)
+                    y = np.round(float(y_candidate), 2)
+                    graph[(x, y)] = []  # (None, None)
                     nodes_added += 1
         return graph
 
@@ -448,7 +448,7 @@ if __name__ == "__main__":
     # Smooth the path
     start_time = time.perf_counter()
     smoothed_path = prm.smooth_path(
-        path, data_weight=0.1, smooth_weight=0.3, additional_smoothing_points=3
+        path, data_weight=0.1, smooth_weight=0.3, additional_smoothing_points=10
     )
     smoothing_time = time.perf_counter() - start_time
 
