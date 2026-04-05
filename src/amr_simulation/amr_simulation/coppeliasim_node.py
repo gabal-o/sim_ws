@@ -212,7 +212,7 @@ class CoppeliaSimNode(LifecycleNode):
                 f"Localized at x = {x_h:.2f} m, y = {y_h:.2f} m, "
                 f"th = {th_h:.2f} rad ({th_h_deg:.1f}º) | "
                 f"Real pose: x = {x:.2f} m, y = {y:.2f} m, th = {th:.2f} rad ({th_deg:.1f}º) | "
-                f"Error{' (OK)' if within_tolerance else ''}: "
+                f"Error{' (OK)' if within_tolerance else '(ERROR)'}: "
                 f"{position_error:.3f} m, {angle_error:.1f}º",
                 once=True,  # Log only the first time this function is hit
             )
@@ -221,7 +221,7 @@ class CoppeliaSimNode(LifecycleNode):
                 f"Estimated: x = {x_h:.2f} m, y = {y_h:.2f} m, "
                 f"th = {th_h:.2f} rad ({th_h_deg:.1f}º) | "
                 f"Real pose: x = {x:.2f} m, y = {y:.2f} m, th = {th:.2f} rad ({th_deg:.1f}º) | "
-                f"Error{' (OK)' if within_tolerance else ''}: "
+                f"Error{' (OK)' if within_tolerance else '(ERROR)'}: "
                 f"{position_error:.3f} m, {angle_error:.1f}º",
                 skip_first=True,  # Log all but the first time this function is hit
             )

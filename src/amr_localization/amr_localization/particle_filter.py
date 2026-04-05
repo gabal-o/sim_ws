@@ -94,7 +94,7 @@ class ParticleFilter:
         )
         clustering = DBSCAN(eps=0.2, min_samples=20).fit(particles_sincos)
         n_clusters = len(set(clustering.labels_)) - (1 if -1 in clustering.labels_ else 0)
-        min_number_particles = 200
+        min_number_particles = 300  # 200
         max_number_particles = self._initial_particle_count
         wanted_particles = (
             min_number_particles * n_clusters

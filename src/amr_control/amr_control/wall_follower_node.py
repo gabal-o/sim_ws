@@ -90,12 +90,12 @@ class WallFollowerNode(LifecycleNode):
                 )
                 )
 
-            ts.registerCallback(self._compute_commands_callback)
             ts = message_filters.ApproximateTimeSynchronizer(
                 self._subscribers,
                 queue_size=10,
                 slop=9
             )
+            ts.registerCallback(self._compute_commands_callback)
         except Exception:
             self.get_logger().error(f"{traceback.format_exc()}")
             return TransitionCallbackReturn.ERROR
