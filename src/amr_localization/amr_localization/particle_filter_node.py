@@ -201,8 +201,8 @@ class ParticleFilterNode(LifecycleNode):
 
         self.get_logger().info(f"Move step time: {move_time:7.3f} s")
 
-        if self._enable_plot:
-            self._particle_filter.show("Move", save_figure=True)
+        # if self._enable_plot:
+        #     self._particle_filter.show("Move", save_figure=True)
 
     def _publish_pose_estimate(self, x_h: float, y_h: float, theta_h: float) -> None:
         """Publishes the robot's pose estimate in a custom amr_msgs.msg.PoseStamped message.

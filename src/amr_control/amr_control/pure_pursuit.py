@@ -1,5 +1,5 @@
 import math
-
+import numpy as np
 
 class PurePursuit:
     """Class to follow a path using a simple pure pursuit controller."""
@@ -52,6 +52,9 @@ class PurePursuit:
         v = 0.1  # Hemos asumido que tenemos un grado de libertad
         w = (2 * v * math.sin(alpha)) / self._lookahead_distance
 
+        if math.sin(alpha) > math.radians(20):
+            w = 0.5 * np.sign(math.sin(alpha))
+            v = 0.0
         return v, w
 
     @property

@@ -387,7 +387,7 @@ class ParticleFilter:
             for measure in measurements
         ]
         z_hat = self._sense(pose=particle)
-        z_hat = [z if not math.isnan(z) else self._sensor_range_max for z in z_hat]
+        z_hat = [z if not math.isnan(z) else self._sensor_range_min for z in z_hat]
         for z, measurement in zip(z_hat, measurements[::len(measurements)//8]):
             probability *= self._gaussian(mu=z, sigma=self._sigma_z, x=measurement)
         return probability

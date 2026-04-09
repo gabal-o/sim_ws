@@ -289,6 +289,8 @@ class CoppeliaSimNode(LifecycleNode):
         msg = LaserScan()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.angle_increment = math.radians(1.5)
+        msg.range_max = self._robot.SENSOR_RANGE_MAX
+        msg.range_min = self._robot.SENSOR_RANGE_MIN
         msg.ranges = z_scan
         self._lidar_publisher.publish(msg)
         
