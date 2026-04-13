@@ -49,11 +49,13 @@ class PurePursuit:
         beta = math.atan2((yl - y), (xl - x))
         alpha = beta - theta
 
-        v = 0.1  # Hemos asumido que tenemos un grado de libertad
+        v = 0.15  # Hemos asumido que tenemos un grado de libertad
         w = (2 * v * math.sin(alpha)) / self._lookahead_distance
+        goal_x, goal_y = self._path[-1]
+        is_goal_target = (xl, yl) == (goal_x, goal_y)
 
-        if math.sin(alpha) > math.radians(20):
-            w = 0.5 * np.sign(math.sin(alpha))
+        if abs(alpha) > math.radians(20) and not is_goal_target:
+            w = 0.5 * np.sign(alpha)
             v = 0.0
         return v, w
 
@@ -103,10 +105,8 @@ class PurePursuit:
         """
         # TODO: 4.10. Complete the function body with your code (i.e., determine target_xy).
 
-        target_point_idx = -1
-
         for i in range(origin_idx, len(self._path)):
             if math.dist(origin_xy, self.path[i]) >= self._lookahead_distance:
-                target_point_idx = i
-                break
-        return self.path[target_point_idx]
+                return self.path[i]
+                
+        return self.path[-1]

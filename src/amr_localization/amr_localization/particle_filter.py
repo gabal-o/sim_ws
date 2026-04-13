@@ -105,7 +105,7 @@ class ParticleFilter:
         
         if n_clusters == 1:
             localized = True
-            # self._particle_count = 50
+            self._particle_count = 50
             pose_sincos = (
                 np.mean(particles_sincos[:, 0]),
                 np.mean(particles_sincos[:, 1]),
