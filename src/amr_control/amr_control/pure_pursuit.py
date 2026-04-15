@@ -47,15 +47,18 @@ class PurePursuit:
         current_point, current_index = self._find_closest_point(float(x), float(y))
         xl, yl = self._find_target_point(current_point, current_index)
         beta = math.atan2((yl - y), (xl - x))
+        theta %= math.tau
         alpha = beta - theta
+        alpha_norm = (alpha + math.pi) % (2 * math.pi) - math.pi
 
-        v = 0.15  # Hemos asumido que tenemos un grado de libertad
+        v = 0.10  # Hemos asumido que tenemos un grado de libertad
         w = (2 * v * math.sin(alpha)) / self._lookahead_distance
         goal_x, goal_y = self._path[-1]
         is_goal_target = (xl, yl) == (goal_x, goal_y)
-
-        if abs(alpha) > math.radians(20) and not is_goal_target:
-            w = 0.5 * np.sign(alpha)
+        # self._logger.warn(f"Beta: {beta} Theta: {theta} Alpha: {alpha} Alpha_norm: {alpha_norm}")
+        if abs(alpha_norm) > math.radians(40) and not is_goal_target:
+            self._logger.warn(f"Beta: {beta} Theta: {theta} Alpha: {alpha} Alpha_norm: {alpha_norm}")
+            w = 0.7 * np.sign(alpha_norm)
             v = 0.0
         return v, w
 
