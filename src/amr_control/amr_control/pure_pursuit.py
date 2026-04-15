@@ -57,7 +57,7 @@ class PurePursuit:
         is_goal_target = (xl, yl) == (goal_x, goal_y)
         # self._logger.warn(f"Beta: {beta} Theta: {theta} Alpha: {alpha} Alpha_norm: {alpha_norm}")
         if abs(alpha_norm) > math.radians(40) and not is_goal_target:
-            self._logger.warn(f"Beta: {beta} Theta: {theta} Alpha: {alpha} Alpha_norm: {alpha_norm}")
+            # self._logger.warn(f"Beta: {beta} Theta: {theta} Alpha: {alpha} Alpha_norm: {alpha_norm}")
             w = 0.7 * np.sign(alpha_norm)
             v = 0.0
         return v, w

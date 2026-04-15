@@ -107,7 +107,7 @@ class ParticleFilter:
         )
         self._particle_count = wanted_particles
         
-        if n_clusters == 1:
+        if n_clusters == 1 and self._mean_likelihood > 1e-6:
             localized = True
             self._particle_count = 50
             pose_sincos = (
@@ -159,16 +159,15 @@ class ParticleFilter:
         """
         # TODO: 3.9. Complete the function body with your code (i.e., replace the pass statement).
 
-        weights = np.array(
+        weights_unnormalized = np.array(
             [self._measurement_probability(measurements, p) for p in self._particles]
         )
-        self._mean_likelihood = float(np.mean(weights))
-        w_sum = weights.sum()
+        w_sum = weights_unnormalized.sum()
         if w_sum == 0.0:
             self.reset()
             return
         #  normalizar y construir CDF
-        weights /= w_sum
+        weights = weights_unnormalized / w_sum
         cdf = np.cumsum(weights)
 
         #  Stochastic Universal Sampling (systematic resampling)
@@ -181,6 +180,8 @@ class ParticleFilter:
 
         #  construir nuevo conjunto de partículas
         self._particles = np.array([self._particles[i] for i in idx])
+        weights_unnormalized = np.array([weights_unnormalized[i] for i in idx])
+        self._mean_likelihood = float(np.median(weights_unnormalized))
 
     def reset(self) -> None:
         """Reinitialize the particle set with the original configuration."""

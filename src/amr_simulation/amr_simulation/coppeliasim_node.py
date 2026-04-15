@@ -69,48 +69,31 @@ class CoppeliaSimNode(LifecycleNode):
                 reliability=QoSReliabilityPolicy.BEST_EFFORT,
                 durability=QoSDurabilityPolicy.VOLATILE,
                 history=QoSHistoryPolicy.KEEP_LAST,
-                depth=10
-                )
+                depth=10,
+            )
             self._lidar_publisher = self.create_publisher(
-                msg_type=LaserScan,
-                topic="scan",
-                qos_profile=qos
+                msg_type=LaserScan, topic="scan", qos_profile=qos
             )
             self._odometry_publisher = self.create_publisher(
-                msg_type=Odometry,
-                topic="odometry",
-                qos_profile=qos
+                msg_type=Odometry, topic="odometry", qos_profile=qos
             )
-        
 
             # Subscribers
             # TODO: 2.12. Subscribe to /cmd_vel. Connect it with with _next_step_callback.
             self._subscribers = []
             self._subscribers.append(
-                message_filters.Subscriber(
-                    self,
-                    TwistStamped,
-                    "cmd_vel",
-                    qos_profile=10
-                )
+                message_filters.Subscriber(self, TwistStamped, "cmd_vel", qos_profile=10)
             )
 
             # TODO: 3.3. Sync the /pose and /cmd_vel subscribers if enable_localization is True.
-            
+
             if enable_localization:
                 self._subscribers.append(
-                    message_filters.Subscriber(
-                        self,
-                        PoseStamped,
-                        "pose",
-                        qos_profile=10
-                    )
+                    message_filters.Subscriber(self, PoseStamped, "pose", qos_profile=10)
                 )
 
             ts = message_filters.ApproximateTimeSynchronizer(
-                self._subscribers,
-                queue_size=10,
-                slop=9
+                self._subscribers, queue_size=10, slop=9
             )
 
             ts.registerCallback(self._next_step_callback)
@@ -161,7 +144,7 @@ class CoppeliaSimNode(LifecycleNode):
         # TODO: 2.13. Parse the velocities from the TwistStamped message (i.e., read v and w).
         v: float = cmd_vel_msg.twist.linear.x
         w: float = cmd_vel_msg.twist.angular.z
-        
+
         # Execute simulation step
         self._robot.move(v, w)
         self._coppeliasim.next_step()
@@ -212,7 +195,7 @@ class CoppeliaSimNode(LifecycleNode):
                 f"Localized at x = {x_h:.2f} m, y = {y_h:.2f} m, "
                 f"th = {th_h:.2f} rad ({th_h_deg:.1f}º) | "
                 f"Real pose: x = {x:.2f} m, y = {y:.2f} m, th = {th:.2f} rad ({th_deg:.1f}º) | "
-                f"Error{' (OK)' if within_tolerance else '(ERROR)'}: "
+                f"Error{' (OK)' if within_tolerance else ' (ERROR)'}: "
                 f"{position_error:.3f} m, {angle_error:.1f}º",
                 once=True,  # Log only the first time this function is hit
             )
@@ -221,7 +204,7 @@ class CoppeliaSimNode(LifecycleNode):
                 f"Estimated: x = {x_h:.2f} m, y = {y_h:.2f} m, "
                 f"th = {th_h:.2f} rad ({th_h_deg:.1f}º) | "
                 f"Real pose: x = {x:.2f} m, y = {y:.2f} m, th = {th:.2f} rad ({th_deg:.1f}º) | "
-                f"Error{' (OK)' if within_tolerance else '(ERROR)'}: "
+                f"Error{' (OK)' if within_tolerance else ' (ERROR)'}: "
                 f"{position_error:.3f} m, {angle_error:.1f}º",
                 skip_first=True,  # Log all but the first time this function is hit
             )
@@ -277,7 +260,6 @@ class CoppeliaSimNode(LifecycleNode):
         msg.twist.twist.angular.z = float(z_w)
         self._odometry_publisher.publish(msg)
 
-        
     def _publish_scan(self, z_scan: list[float]) -> None:
         """Publishes LiDAR measurements in a sensor_msgs.msg.LaserScan message.
 
@@ -293,7 +275,7 @@ class CoppeliaSimNode(LifecycleNode):
         msg.range_min = self._robot.SENSOR_RANGE_MIN
         msg.ranges = z_scan
         self._lidar_publisher.publish(msg)
-        
+
 
 def main(args=None):
     rclpy.init(args=args)

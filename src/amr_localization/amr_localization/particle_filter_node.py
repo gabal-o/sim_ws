@@ -27,7 +27,7 @@ class ParticleFilterNode(LifecycleNode):
         self.declare_parameter("global_localization", True)
         self.declare_parameter("initial_pose", (0.0, 0.0, math.radians(0)))
         self.declare_parameter("initial_pose_sigma", (0.05, 0.05, math.radians(5)))
-        self.declare_parameter("min_mean_likelihood", 1e-6)
+        self.declare_parameter("min_mean_likelihood", 1.0)
         self.declare_parameter("particles", 1000)
         self.declare_parameter("sigma_v", 0.1)
         self.declare_parameter("sigma_w", 0.1)
@@ -35,6 +35,7 @@ class ParticleFilterNode(LifecycleNode):
         self.declare_parameter("simulation", False)
         self.declare_parameter("steps_btw_sense_updates", 10)
         self.declare_parameter("world", "lab03")
+        self.declare_parameter("low_likelihood_max_count", 5)
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Handles a configuring transition.
@@ -63,6 +64,8 @@ class ParticleFilterNode(LifecycleNode):
             self._min_mean_likelihood = (
                 self.get_parameter("min_mean_likelihood").get_parameter_value().double_value
             )
+            self._low_likelihood_max_count = self.get_parameter("low_likelihood_max_count").get_parameter_value().integer_value
+            self.low_likelihood_count = 0
             particles = self.get_parameter("particles").get_parameter_value().integer_value
             sigma_v = self.get_parameter("sigma_v").get_parameter_value().double_value
             sigma_w = self.get_parameter("sigma_w").get_parameter_value().double_value
@@ -191,15 +194,20 @@ class ParticleFilterNode(LifecycleNode):
             self.get_logger().info(f"Clustering time: {clustering_time:6.3f} s")
             self.get_logger().warn(f"Mean likelihood: {self._particle_filter.mean_likelihood}")
 
-            if (
-                self._localized
-                and self._particle_filter.mean_likelihood < self._min_mean_likelihood
-            ):
-                self.get_logger().warn("Low mean likelihood. Resetting particle filter.")
-                self._particle_filter.reset()
-                self._localized = False
-                self._steps = 0
-                pose = (float("inf"), float("inf"), float("inf"))
+            if self._localized:
+                if self._particle_filter.mean_likelihood < self._min_mean_likelihood:
+                    self._low_likelihood_count += 1
+                else:
+                    self._low_likelihood_count = 0
+                
+                if self._low_likelihood_count >= self._low_likelihood_max_count:
+                    self.get_logger().warn("Low mean likelihood. Resetting particle filter.")
+                    self._particle_filter.reset()
+                    self._localized = False
+                    self._steps = 0
+                    pose = (float("inf"), float("inf"), float("inf"))
+            else:
+                self._low_likelihood_count = 0
 
         return pose
 
