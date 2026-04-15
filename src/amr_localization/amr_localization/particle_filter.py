@@ -98,7 +98,7 @@ class ParticleFilter:
         )
         clustering = DBSCAN(eps=0.2, min_samples=20).fit(particles_sincos)
         n_clusters = len(set(clustering.labels_)) - (1 if -1 in clustering.labels_ else 0)
-        min_number_particles = 300
+        min_number_particles = 200
         max_number_particles = self._initial_particle_count
         wanted_particles = (
             min_number_particles * n_clusters
@@ -109,7 +109,7 @@ class ParticleFilter:
         
         if n_clusters == 1:
             localized = True
-            # self._particle_count = 50
+            self._particle_count = 50
             pose_sincos = (
                 np.mean(particles_sincos[:, 0]),
                 np.mean(particles_sincos[:, 1]),
@@ -412,7 +412,7 @@ class ParticleFilter:
             for measure in measurements
         ]
         z_hat = self._sense(pose=particle)
-        z_hat = [z if not math.isnan(z) else self._sensor_range_max for z in z_hat]
+        z_hat = [z if not math.isnan(z) else self._sensor_range_min for z in z_hat]
         for z, measurement in zip(z_hat, measurements[::len(measurements)//8]):
             probability *= self._gaussian(mu=z, sigma=self._sigma_z, x=measurement)
         return probability

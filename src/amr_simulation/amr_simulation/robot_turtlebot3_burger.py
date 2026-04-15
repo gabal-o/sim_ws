@@ -42,7 +42,7 @@ class TurtleBot3Burger(Robot):
         # TODO: 2.1. Complete the function body with your code (i.e., replace the pass statement).
         angular_vel_left = (v - w*self.TRACK/2) / self.WHEEL_RADIUS
         angular_vel_right = (v + w*self.TRACK/2) / self.WHEEL_RADIUS
-        if angular_vel_left <  self.WHEEL_SPEED_MAX  and angular_vel_right < self.WHEEL_SPEED_MAX :
+        if abs(angular_vel_left) <  self.WHEEL_SPEED_MAX  and abs(angular_vel_right) < self.WHEEL_SPEED_MAX :
             self._last_right = angular_vel_right
             self._last_left = angular_vel_left
         self._sim.setJointTargetVelocity(self._motors["left"], self._last_left)

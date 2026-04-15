@@ -90,12 +90,12 @@ class WallFollowerNode(LifecycleNode):
                 )
                 )
 
-            ts.registerCallback(self._compute_commands_callback)
             ts = message_filters.ApproximateTimeSynchronizer(
                 self._subscribers,
                 queue_size=10,
                 slop=9
             )
+            ts.registerCallback(self._compute_commands_callback)
         except Exception:
             self.get_logger().error(f"{traceback.format_exc()}")
             return TransitionCallbackReturn.ERROR
@@ -152,8 +152,8 @@ class WallFollowerNode(LifecycleNode):
         # TODO: 2.11. Complete the function body with your code (i.e., replace the pass statement).
         new_msg = TwistStamped()
         new_msg.header.stamp = self.get_clock().now().to_msg()
-        new_msg.twist.linear.x = v
-        new_msg.twist.angular.z = w
+        new_msg.twist.linear.x = float(v)
+        new_msg.twist.angular.z = float(w)
         self._cmd_vel_publisher.publish(new_msg)
         
 

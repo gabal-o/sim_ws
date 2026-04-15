@@ -59,6 +59,7 @@ class PRM:
             grid_size,
             connection_distance,
         )
+        self._connection_distance = connection_distance
 
         self._logger = logger
         self._simulation: bool = simulation
