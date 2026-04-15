@@ -5,3 +5,7 @@ log/
 
 # Python
 __pycache__/
+
+# Generated images
+src/*/images/
+src/*/images/*.png

@@ -48,8 +48,12 @@ class ParticleFilter:
 
         """
         self._dt: float = dt
+        self._global_localization: bool = global_localization
         self._initial_particle_count: int = particle_count
+        self._initial_pose: tuple[float, float, float] = initial_pose
+        self._initial_pose_sigma: tuple[float, float, float] = initial_pose_sigma
         self._logger = logger
+        self._mean_likelihood: float = float("inf")
         self._particle_count: int = particle_count
         self._sensor_range_min: float = sensor_range_min
         self._sensor_range_max: float = sensor_range_max
@@ -94,7 +98,7 @@ class ParticleFilter:
         )
         clustering = DBSCAN(eps=0.2, min_samples=20).fit(particles_sincos)
         n_clusters = len(set(clustering.labels_)) - (1 if -1 in clustering.labels_ else 0)
-        min_number_particles = 200
+        min_number_particles = 300
         max_number_particles = self._initial_particle_count
         wanted_particles = (
             min_number_particles * n_clusters
@@ -114,6 +118,11 @@ class ParticleFilter:
             )
             pose = pose_sincos[0], pose_sincos[1], math.atan2(pose_sincos[-2], pose_sincos[-1])
         return localized, pose
+
+    @property
+    def mean_likelihood(self) -> float:
+        """Mean particle likelihood before normalization."""
+        return self._mean_likelihood
 
     def move(self, v: float, w: float) -> None:
         """Performs a motion update on the particles.
@@ -153,7 +162,11 @@ class ParticleFilter:
         weights = np.array(
             [self._measurement_probability(measurements, p) for p in self._particles]
         )
+        self._mean_likelihood = float(np.mean(weights))
         w_sum = weights.sum()
+        if w_sum == 0.0:
+            self.reset()
+            return
         #  normalizar y construir CDF
         weights /= w_sum
         cdf = np.cumsum(weights)
@@ -168,6 +181,17 @@ class ParticleFilter:
 
         #  construir nuevo conjunto de partículas
         self._particles = np.array([self._particles[i] for i in idx])
+
+    def reset(self) -> None:
+        """Reinitialize the particle set with the original configuration."""
+        self._particles = self._init_particles(
+            self._initial_particle_count,
+            self._global_localization,
+            self._initial_pose,
+            self._initial_pose_sigma,
+        )
+        self._particle_count = self._initial_particle_count
+        self._mean_likelihood = float("inf")
 
     def plot(self, axes, orientation: bool = True):
         """Draws particles.
@@ -307,7 +331,7 @@ class ParticleFilter:
         z_hat: list[float] = []
 
         # TODO: 3.6. Complete the missing function body with your code.
-        rays = self._lidar_rays(pose, indices=range(8), degree_increment=45)
+        rays = self._lidar_rays(pose, indices=range(8), degree_increment=45) # cambiar?
 
         for segment in rays:
             _, distancia = self._map.check_collision(segment, True)
@@ -381,7 +405,8 @@ class ParticleFilter:
         """
         probability = 1.0
 
-        # TODO: 3.8. Complete the missing function body with your code.
+        # TODO: 3.8. Complete the missing function body with your code
+        # REVISAR.
         measurements = [
             measure if not math.isnan(measure) else self._sensor_range_min
             for measure in measurements
