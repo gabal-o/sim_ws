@@ -53,7 +53,7 @@ class ParticleFilter:
         self._initial_pose: tuple[float, float, float] = initial_pose
         self._initial_pose_sigma: tuple[float, float, float] = initial_pose_sigma
         self._logger = logger
-        self._mean_likelihood: float = float("inf")
+        self._median_likelihood: float = float("inf")
         self._particle_count: int = particle_count
         self._sensor_range_min: float = sensor_range_min
         self._sensor_range_max: float = sensor_range_max
@@ -107,7 +107,7 @@ class ParticleFilter:
         )
         self._particle_count = wanted_particles
         
-        if n_clusters == 1 and self._mean_likelihood > 1e-6:
+        if n_clusters == 1:
             localized = True
             self._particle_count = 50
             pose_sincos = (
@@ -120,9 +120,57 @@ class ParticleFilter:
         return localized, pose
 
     @property
-    def mean_likelihood(self) -> float:
-        """Mean particle likelihood before normalization."""
-        return self._mean_likelihood
+    def median_likelihood(self) -> float:
+        """median particle likelihood before normalization."""
+        return self._median_likelihood
+
+    # def move(self, v: float, w: float) -> None:
+    #     """Perform a motion update on the particles.
+
+    #     Args:
+    #         v: Linear velocity [m/s].
+    #         w: Angular velocity [rad/s].
+    #     """
+    #     #TODO: 3.5. Complete the function body with your code.
+    #     self._iteration += 1
+
+    #     particles = np.asarray(self._particles, dtype=float)
+    #     self._particles = particles
+    #     dt = self._dt
+    #     sigma_v = self._sigma_v
+    #     sigma_w = self._sigma_w
+    #     sensor_map = self._map
+    #     two_pi = math.tau
+
+    #     particle_count = particles.shape[0]
+    #     if particle_count == 0:
+    #         return
+
+    #     v_new = np.random.normal(loc=v, scale=sigma_v, size=particle_count)
+    #     w_new = np.random.normal(loc=w, scale=sigma_w, size=particle_count)
+
+    #     x_last = particles[:, 0].copy()
+    #     y_last = particles[:, 1].copy()
+    #     theta_last = particles[:, 2]
+
+    #     cos_theta = np.cos(theta_last)
+    #     sin_theta = np.sin(theta_last)
+
+    #     x = x_last + v_new * cos_theta * dt
+    #     y = y_last + v_new * sin_theta * dt
+    #     theta = np.remainder(theta_last + w_new * dt, two_pi)
+
+    #     for i in range(particle_count):
+    #         intersection, _ = sensor_map.check_collision(
+    #             [(x_last[i], y_last[i]), (x[i], y[i])],
+    #             False,
+    #         )
+    #         if intersection:
+    #             x[i], y[i] = intersection
+
+    #     particles[:, 0] = x
+    #     particles[:, 1] = y
+    #     particles[:, 2] = theta
 
     def move(self, v: float, w: float) -> None:
         """Performs a motion update on the particles.
@@ -163,11 +211,10 @@ class ParticleFilter:
             [self._measurement_probability(measurements, p) for p in self._particles]
         )
         w_sum = weights_unnormalized.sum()
-        if w_sum == 0.0:
-            self.reset()
-            return
+        
         #  normalizar y construir CDF
-        weights = weights_unnormalized / w_sum
+
+        weights = weights_unnormalized / (w_sum if w_sum else 1)
         cdf = np.cumsum(weights)
 
         #  Stochastic Universal Sampling (systematic resampling)
@@ -176,12 +223,12 @@ class ParticleFilter:
         u = u0 + step * np.arange(self._particle_count)
 
         #  mapear punteros u a índices vía CDF
-        idx = np.digitize(u, cdf, right=False)
+        idx = np.digitize(u, cdf)
 
         #  construir nuevo conjunto de partículas
         self._particles = np.array([self._particles[i] for i in idx])
         weights_unnormalized = np.array([weights_unnormalized[i] for i in idx])
-        self._mean_likelihood = float(np.median(weights_unnormalized))
+        self._median_likelihood = float(np.median(weights_unnormalized))
 
     def reset(self) -> None:
         """Reinitialize the particle set with the original configuration."""
@@ -192,7 +239,7 @@ class ParticleFilter:
             self._initial_pose_sigma,
         )
         self._particle_count = self._initial_particle_count
-        self._mean_likelihood = float("inf")
+        self._median_likelihood = float("inf")
 
     def plot(self, axes, orientation: bool = True):
         """Draws particles.
