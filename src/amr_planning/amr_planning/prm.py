@@ -3,7 +3,6 @@ import numpy as np
 import math
 import os
 import pytz
-import random
 import time
 
 # This try-except enables local debugging of the PRM class
@@ -86,7 +85,8 @@ class PRM:
         if not self._map.contains(goal):
             raise ValueError("Goal location is outside the environment.")
 
-        ancestors: dict[tuple[float, float], tuple[float, float]] = {}  # {(x, y: (x_prev, y_prev)}
+        # {(x, y: (x_prev, y_prev)}
+        ancestors: dict[tuple[float, float], tuple[float, float]] = {}
         # TODO: 4.3. Complete the function body (i.e., replace the code below).]
         start_in_graph = False
         if start in self._graph:
@@ -99,7 +99,8 @@ class PRM:
                 key=lambda p: math.dist(p, start),
             )
             self._graph[start_node] = []
-            self._connect_nodes(graph=self._graph, connection_distance=self._connection_distance)
+            self._connect_nodes(graph=self._graph,
+                                connection_distance=self._connection_distance)
 
         if goal in self._graph:
             goal_in_graph = True
@@ -113,8 +114,8 @@ class PRM:
             self._graph[goal_node] = []
             self._connect_nodes(graph=self._graph)
 
-        # h = heuristica (distancia euclídea)
-        # (f,g) f = h + g, g numero de pasos acumulados
+        # h = Euclidean-distance heuristic
+        # (f, g) where f = h + g and g is the accumulated path cost
         open_list = {start_node: (math.dist(start_node, goal_node), 0)}
         closed_list = set()
         while open_list:
@@ -168,7 +169,7 @@ class PRM:
 
         expanded_path: list[tuple[float, float]] = []
 
-        if additional_smoothing_points:    
+        if additional_smoothing_points:
             for i in range(len(path) - 1):
                 p1 = np.array(path[i], dtype=float)
                 p2 = np.array(path[i + 1], dtype=float)
@@ -186,8 +187,6 @@ class PRM:
 
         original = [np.array(p, dtype=float) for p in path]
         smoothed = [np.array(p, dtype=float) for p in path]
-            
-
 
         iter_error = np.inf
 
@@ -198,9 +197,9 @@ class PRM:
                 old_point = smoothed[i].copy()
 
                 smoothed[i] = (
-                    smoothed[i]
-                    + data_weight * (original[i] - smoothed[i])
-                    + smooth_weight * (smoothed[i + 1] + smoothed[i - 1] - 2 * smoothed[i])
+                    smoothed[i] +
+                    data_weight * (original[i] - smoothed[i]) +
+                    smooth_weight * (smoothed[i + 1] + smoothed[i - 1] - 2 * smoothed[i])
                 )
 
                 iter_error += np.sum(np.abs(smoothed[i] - old_point))
@@ -234,7 +233,8 @@ class PRM:
 
             if neighbors:
                 for x_end, y_end in neighbors:
-                    axes.plot([x_start, x_end], [y_start, y_end], "c-", linewidth=0.25)
+                    axes.plot([x_start, x_end], [y_start, y_end],
+                              "c-", linewidth=0.25)
 
         # Plot the path
         if path:
@@ -242,7 +242,8 @@ class PRM:
             y_val = [x[1] for x in path]
 
             axes.plot(x_val, y_val)  # Plot the path
-            axes.plot(x_val[1:-1], y_val[1:-1], "bo", markersize=4)  # Draw nodes as blue circles
+            # Draw nodes as blue circles
+            axes.plot(x_val[1:-1], y_val[1:-1], "bo", markersize=4)
 
         # Plot the smoothed path
         if smoothed_path:
@@ -250,7 +251,8 @@ class PRM:
             y_val = [x[1] for x in smoothed_path]
 
             axes.plot(x_val, y_val, "y")  # Plot the path
-            axes.plot(x_val[1:-1], y_val[1:-1], "yo", markersize=2)  # Draw nodes as yellow circles
+            # Draw nodes as yellow circles
+            axes.plot(x_val[1:-1], y_val[1:-1], "yo", markersize=2)
 
         if path or smoothed_path:
             axes.plot(
@@ -429,12 +431,14 @@ class PRM:
 if __name__ == "__main__":
     map_name = "project"
     map_path = os.path.realpath(
-        os.path.join(os.path.dirname(__file__), "..", "maps", map_name + ".json")
+        os.path.join(os.path.dirname(__file__), "..",
+                     "maps", map_name + ".json")
     )
 
     # Create the roadmap
     start_time = time.perf_counter()
-    prm = PRM(map_path, use_grid=True, node_count=250, grid_size=0.1, connection_distance=0.15)
+    prm = PRM(map_path, use_grid=True, node_count=250,
+              grid_size=0.1, connection_distance=0.15)
     roadmap_creation_time = time.perf_counter() - start_time
 
     print(f"Roadmap creation time: {roadmap_creation_time:1.3f} s")

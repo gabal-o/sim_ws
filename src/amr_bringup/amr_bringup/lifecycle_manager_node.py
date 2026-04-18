@@ -37,9 +37,8 @@ class LifecycleManagerNode(Node):
 
         # Parameters
         self.declare_parameter("node_startup_order", [""])
-        lifecycle_names = (
-            self.get_parameter("node_startup_order").get_parameter_value().string_array_value
-        )
+        lifecycle_names = self.get_parameter(
+            "node_startup_order").get_parameter_value().string_array_value
 
         # Create clients to change and retrieve the states of lifecycle nodes
         self._lifecycle_clients: dict[str, dict[str, Client]] = {}
@@ -62,15 +61,21 @@ class LifecycleManagerNode(Node):
         for node, client in self._lifecycle_clients.items():
             current_state_id = self._get_state(client.get("get"))
 
-            if self._is_transition_allowed(node, current_state_id, Transition.TRANSITION_CONFIGURE):
-                self._change_state(client.get("change"), Transition.TRANSITION_CONFIGURE)
+            if self._is_transition_allowed(
+                node, current_state_id, Transition.TRANSITION_CONFIGURE
+            ):
+                self._change_state(client.get("change"),
+                                   Transition.TRANSITION_CONFIGURE)
 
         # Transition nodes to the 'active' state in order
         for node, client in self._lifecycle_clients.items():
             current_state_id = self._get_state(client.get("get"))
 
-            if self._is_transition_allowed(node, current_state_id, Transition.TRANSITION_ACTIVATE):
-                self._change_state(client.get("change"), Transition.TRANSITION_ACTIVATE)
+            if self._is_transition_allowed(
+                node, current_state_id, Transition.TRANSITION_ACTIVATE
+            ):
+                self._change_state(client.get("change"),
+                                   Transition.TRANSITION_ACTIVATE)
 
     def _change_state(self, client: Client, transition_id: int) -> None:
         """Sends a request to change the state of a lifecycle node.
@@ -101,7 +106,9 @@ class LifecycleManagerNode(Node):
 
         return future.result().current_state.id if future.result() else None
 
-    def _is_transition_allowed(self, node_name: str, state_id: int, transition_id: int) -> bool:
+    def _is_transition_allowed(
+        self, node_name: str, state_id: int, transition_id: int
+    ) -> bool:
         """Checks whether a transition can be performed based on the current state of a node.
 
         Args:
@@ -135,8 +142,10 @@ class LifecycleManagerNode(Node):
         is_allowed = transition_id in valid_transitions.get(state_id, [])
 
         if not is_allowed:
-            state_name = LifecycleManagerNode.LIFECYCLE_STATE_NAMES.get(state_id)
-            transition_name = LifecycleManagerNode.LIFECYCLE_TRANSITION_NAMES.get(transition_id)
+            state_name = LifecycleManagerNode.LIFECYCLE_STATE_NAMES.get(
+                state_id)
+            transition_name = LifecycleManagerNode.LIFECYCLE_TRANSITION_NAMES.get(
+                transition_id)
             self.get_logger().error(
                 f"The '{node_name}' node cannot execute the '{transition_name}' transition from "
                 f"the '{state_name}' state."
@@ -146,6 +155,7 @@ class LifecycleManagerNode(Node):
 
 
 def main(args=None):
+    """Run the lifecycle manager node."""
     rclpy.init(args=args)
     lifecycle_manager_node = LifecycleManagerNode()
 

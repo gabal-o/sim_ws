@@ -17,6 +17,8 @@ from amr_simulation.robot_turtlebot3_burger import TurtleBot3Burger
 
 
 class CoppeliaSimNode(LifecycleNode):
+    """Lifecycle node that bridges ROS 2 and CoppeliaSim."""
+
     def __init__(self):
         """Simulator node initializer."""
         super().__init__("coppeliasim")
@@ -38,16 +40,19 @@ class CoppeliaSimNode(LifecycleNode):
             state: Current lifecycle state.
 
         """
-        self.get_logger().info(f"Transitioning from '{state.label}' to 'inactive' state.")
+        self.get_logger().info(
+            f"Transitioning from '{state.label}' to 'inactive' state.")
 
         try:
             # Parameters
             dt = self.get_parameter("dt").get_parameter_value().double_value
             enable_localization = (
-                self.get_parameter("enable_localization").get_parameter_value().bool_value
+                self.get_parameter(
+                    "enable_localization").get_parameter_value().bool_value
             )
             self._goal = tuple(
-                self.get_parameter("goal").get_parameter_value().double_array_value.tolist()
+                self.get_parameter("goal").get_parameter_value(
+                ).double_array_value.tolist()
             )
             pose_tolerance = tuple(
                 self.get_parameter("pose_tolerance")
@@ -55,7 +60,8 @@ class CoppeliaSimNode(LifecycleNode):
                 .double_array_value.tolist()
             )
             start = tuple(
-                self.get_parameter("start").get_parameter_value().double_array_value.tolist()
+                self.get_parameter("start").get_parameter_value(
+                ).double_array_value.tolist()
             )
 
             # Attribute and object initializations
@@ -82,14 +88,16 @@ class CoppeliaSimNode(LifecycleNode):
             # TODO: 2.12. Subscribe to /cmd_vel. Connect it with with _next_step_callback.
             self._subscribers = []
             self._subscribers.append(
-                message_filters.Subscriber(self, TwistStamped, "cmd_vel", qos_profile=10)
+                message_filters.Subscriber(
+                    self, TwistStamped, "cmd_vel", qos_profile=10)
             )
 
             # TODO: 3.3. Sync the /pose and /cmd_vel subscribers if enable_localization is True.
 
             if enable_localization:
                 self._subscribers.append(
-                    message_filters.Subscriber(self, PoseStamped, "pose", qos_profile=10)
+                    message_filters.Subscriber(
+                        self, PoseStamped, "pose", qos_profile=10)
                 )
 
             ts = message_filters.ApproximateTimeSynchronizer(
@@ -111,7 +119,8 @@ class CoppeliaSimNode(LifecycleNode):
             state: Current lifecycle state.
 
         """
-        self.get_logger().info(f"Transitioning from '{state.label}' to 'active' state.")
+        self.get_logger().info(
+            f"Transitioning from '{state.label}' to 'active' state.")
 
         try:
             # Initial method calls
@@ -150,7 +159,8 @@ class CoppeliaSimNode(LifecycleNode):
         self._coppeliasim.next_step()
         z_scan, z_v, z_w = self._robot.sense()
 
-        self.get_logger().info(f"Odometry: z_v = {z_v:.3f} m/s, w = {z_w:+.3f} rad/s")
+        self.get_logger().info(
+            f"Odometry: z_v = {z_v:.3f} m/s, w = {z_w:+.3f} rad/s")
 
         # Check goal
         if self._check_goal():
@@ -219,7 +229,8 @@ class CoppeliaSimNode(LifecycleNode):
         goal_found = False
 
         if self._localized:
-            _, _, _, goal_found = self._coppeliasim.check_position(self._goal[0], self._goal[1])
+            _, _, _, goal_found = self._coppeliasim.check_position(
+                self._goal[0], self._goal[1])
 
             if goal_found:
                 self.get_logger().warn("Congratulations, you reached the goal!")
@@ -278,6 +289,7 @@ class CoppeliaSimNode(LifecycleNode):
 
 
 def main(args=None):
+    """Run the CoppeliaSim node."""
     rclpy.init(args=args)
     coppeliasim_node = CoppeliaSimNode()
 

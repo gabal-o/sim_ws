@@ -5,12 +5,14 @@ class WallFollower:
     """Class to safely explore an environment (without crashing) when the pose is unknown."""
 
     # Robot limits
-    LINEAR_SPEED_MAX = 0.22  # Maximum linear velocity in the abscence of angular velocity [m/s]
+    # Maximum linear velocity in the abscence of angular velocity [m/s]
+    LINEAR_SPEED_MAX = 0.22
     SENSOR_RANGE_MIN = 0.16  # Minimum LiDAR sensor range [m]
     SENSOR_RANGE_MAX = 8.0  # Maximum LiDAR sensor range [m]
     TRACK = 0.16  # Distance between same axle wheels [m]
     WHEEL_RADIUS = 0.033  # Radius of the wheels [m]
-    WHEEL_SPEED_MAX = LINEAR_SPEED_MAX / WHEEL_RADIUS  # Maximum motor angular speed [rad/s]
+    # Maximum motor angular speed [rad/s]
+    WHEEL_SPEED_MAX = LINEAR_SPEED_MAX / WHEEL_RADIUS
 
     # Angle
     SETPOINT = 0.2
@@ -33,7 +35,7 @@ class WallFollower:
         self.last_error = 0.0
         self._turn: bool = False
         self._following_wall: int = 0
-        self._cambio_estado: bool = True
+        self._state_changed: bool = True
 
     def compute_commands(self, z_scan: list[float], z_v: float, z_w: float) -> tuple[float, float]:
         """Wall following exploration algorithm.
@@ -55,14 +57,16 @@ class WallFollower:
 
         dist_front = 0.1 if math.isnan(z_scan[0]) else z_scan[0]
         dist_right = (
-            0.1 if math.isnan(z_scan[3 * len(z_scan) // 4]) else z_scan[3 * len(z_scan) // 4]
+            0.1 if math.isnan(z_scan[3 * len(z_scan) // 4]
+                              ) else z_scan[3 * len(z_scan) // 4]
         )
-        dist_left = 0.1 if math.isnan(z_scan[len(z_scan) // 4]) else z_scan[len(z_scan) // 4]
+        dist_left = 0.1 if math.isnan(
+            z_scan[len(z_scan) // 4]) else z_scan[len(z_scan) // 4]
         dist_wall = self.SETPOINT
 
         if not self._turn:
-            if self._cambio_estado:
-                self._cambio_estado = False
+            if self._state_changed:
+                self._state_changed = False
 
                 if dist_left < dist_right:
                     self._following_wall = -1  # left
@@ -79,27 +83,34 @@ class WallFollower:
             if dist_front < 0.21:
                 v = 0.0
                 self._turn = True
-                self._cambio_estado = True
+                self._state_changed = True
 
         elif self._turn:
             v = 0.0
 
-            if self._cambio_estado:
-                self._cambio_estado = False
+            if self._state_changed:
+                self._state_changed = False
                 if dist_left < dist_right:
                     self._following_wall = -1  # left
                 else:
                     self._following_wall = 1  # right
-            
+
             if self._following_wall == -1:
-                dist_diagonal = 0.1 if math.isnan(z_scan[len(z_scan) // 8]) else z_scan[len(z_scan) // 8]
+                dist_diagonal = (
+                    0.1 if math.isnan(
+                        z_scan[len(z_scan) // 8]) else z_scan[len(z_scan) // 8]
+                )
             elif self._following_wall == 1:
-                dist_diagonal = 0.1 if math.isnan(z_scan[7 * len(z_scan) // 8]) else z_scan[7 * len(z_scan) // 8]
+                dist_diagonal = (
+                    0.1
+                    if math.isnan(z_scan[7 * len(z_scan) // 8])
+                    else z_scan[7 * len(z_scan) // 8]
+                )
 
             if dist_diagonal > self.DIAGONAL_CONSTANT * self.SETPOINT and dist_front > 0.6:
                 w = 0.0
                 self._turn = False
-                self._cambio_estado = True
+                self._state_changed = True
             else:
                 w = 0.5 * self._following_wall
 

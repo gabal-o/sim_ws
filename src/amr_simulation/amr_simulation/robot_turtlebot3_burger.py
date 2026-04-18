@@ -11,7 +11,8 @@ class TurtleBot3Burger(Robot):
     SENSOR_RANGE_MIN = 0.16  # Minimum LiDAR sensor range [m]
     TRACK = 0.16  # Distance between same axle wheels [m]
     WHEEL_RADIUS = 0.033  # Radius of the wheels [m]
-    WHEEL_SPEED_MAX = LINEAR_SPEED_MAX / WHEEL_RADIUS  # Maximum motor angular speed [rad/s]
+    # Maximum motor angular speed [rad/s]
+    WHEEL_SPEED_MAX = LINEAR_SPEED_MAX / WHEEL_RADIUS
 
     def __init__(self, sim: Any, dt: float) -> None:
         """Turtlebot3 Burger robot class initializer.
@@ -21,7 +22,8 @@ class TurtleBot3Burger(Robot):
             dt: Sampling period [s].
 
         """
-        Robot.__init__(self, sim=sim, track=self.TRACK, wheel_radius=self.WHEEL_RADIUS)
+        Robot.__init__(self, sim=sim, track=self.TRACK,
+                       wheel_radius=self.WHEEL_RADIUS)
         self._dt: float = dt
         self._motors: dict[str, int] = self._init_motors()
         self._last_right: float = 0.0
@@ -40,15 +42,18 @@ class TurtleBot3Burger(Robot):
 
         """
         # TODO: 2.1. Complete the function body with your code (i.e., replace the pass statement).
-        angular_vel_left = (v - w*self.TRACK/2) / self.WHEEL_RADIUS
-        angular_vel_right = (v + w*self.TRACK/2) / self.WHEEL_RADIUS
-        if abs(angular_vel_left) <  self.WHEEL_SPEED_MAX  and abs(angular_vel_right) < self.WHEEL_SPEED_MAX :
+        angular_vel_left = (v - w * self.TRACK / 2) / self.WHEEL_RADIUS
+        angular_vel_right = (v + w * self.TRACK / 2) / self.WHEEL_RADIUS
+        if (
+            abs(angular_vel_left) < self.WHEEL_SPEED_MAX
+            and
+            abs(angular_vel_right) < self.WHEEL_SPEED_MAX
+        ):
             self._last_right = angular_vel_right
             self._last_left = angular_vel_left
         self._sim.setJointTargetVelocity(self._motors["left"], self._last_left)
-        self._sim.setJointTargetVelocity(self._motors["right"], self._last_right)
-        
-
+        self._sim.setJointTargetVelocity(
+            self._motors["right"], self._last_right)
 
     def sense(self) -> tuple[list[float], float, float]:
         """Read the LiDAR and the encoders.
@@ -60,7 +65,8 @@ class TurtleBot3Burger(Robot):
 
         """
         # Read LiDAR
-        packed_data: str = self._sim.getBufferProperty(self._sim.handle_scene, "signal.lidar")
+        packed_data: str = self._sim.getBufferProperty(
+            self._sim.handle_scene, "signal.lidar")
         z_scan: list[float] = self._sim.unpackFloatTable(packed_data)
 
         # Return nan if the measurement failed
@@ -95,7 +101,8 @@ class TurtleBot3Burger(Robot):
         # Read the angular position increment in the last sampling period [rad]
         encoders: dict[str, float] = {}
 
-        encoders["left"] = self._sim.getFloatProperty(self._sim.handle_scene, "signal.leftEncoder")
+        encoders["left"] = self._sim.getFloatProperty(
+            self._sim.handle_scene, "signal.leftEncoder")
         encoders["right"] = self._sim.getFloatProperty(
             self._sim.handle_scene, "signal.rightEncoder"
         )
@@ -103,7 +110,6 @@ class TurtleBot3Burger(Robot):
         # TODO: 2.2. Compute the derivatives of the angular positions to obtain velocities [rad/s].
         wr = encoders["right"] / self._dt
         wl = encoders["left"] / self._dt
-
 
         # TODO: 2.3. Solve forward differential kinematics (i.e., calculate z_v and z_w).
         z_v = (wr + wl) * self.WHEEL_RADIUS / 2

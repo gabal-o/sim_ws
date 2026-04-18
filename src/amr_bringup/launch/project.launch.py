@@ -5,10 +5,11 @@ import math
 
 
 def generate_launch_description():
+    """Create the launch description for the project scenario."""
     simulation = True
     world = "project"
-    start = (0.2, -0.2, math.radians(270))
-    goal = (-1.0, 0.6)
+    start = (1.0, 1.0, math.radians(90))
+    goal = (0.2, -0.6)
 
     particle_filter_node = LifecycleNode(
         package="amr_localization",
@@ -21,10 +22,10 @@ def generate_launch_description():
             {
                 "enable_plot": False,
                 "global_localization": True,
-                "particles": 2500, # 2000
-                "sigma_v": 0.05, # 0.05
-                "sigma_w": 0.1, # 0.1
-                "sigma_z": 0.2,  
+                "particles": 2500,  # 2000
+                "sigma_v": 0.05,  # 0.05
+                "sigma_w": 0.1,  # 0.1
+                "sigma_z": 0.2,
                 "simulation": simulation,
                 "world": world,
             }
@@ -45,7 +46,7 @@ def generate_launch_description():
                 "goal": goal,
                 "grid_size": 0.1,
                 "node_count": 250,
-                "obstacle_safety_distance": 0.15, 
+                "obstacle_safety_distance": 0.15,
                 "simulation": simulation,
                 "smoothing_additional_points": 3,
                 "smoothing_data_weight": 0.1,
@@ -80,7 +81,7 @@ def generate_launch_description():
         arguments=["--ros-args", "--log-level", "WARN"],
         parameters=[
             {
-                "lookahead_distance": 0.2, # 0.3
+                "lookahead_distance": 0.2,  # 0.3
                 "simulation": simulation,
             }
         ],

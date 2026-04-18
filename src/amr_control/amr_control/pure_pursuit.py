@@ -1,5 +1,7 @@
 import math
+
 import numpy as np
+
 
 class PurePursuit:
     """Class to follow a path using a simple pure pursuit controller."""
@@ -44,20 +46,19 @@ class PurePursuit:
         w = 0.0
         if not self._path:
             return v, w
-        current_point, current_index = self._find_closest_point(float(x), float(y))
+        current_point, current_index = self._find_closest_point(
+            float(x), float(y))
         xl, yl = self._find_target_point(current_point, current_index)
         beta = math.atan2((yl - y), (xl - x))
         theta %= math.tau
         alpha = beta - theta
         alpha_norm = (alpha + math.pi) % (2 * math.pi) - math.pi
 
-        v = 0.10  # Hemos asumido que tenemos un grado de libertad
+        v = 0.10  # Assume a single translational degree of freedom.
         w = (2 * v * math.sin(alpha)) / self._lookahead_distance
         goal_x, goal_y = self._path[-1]
         is_goal_target = (xl, yl) == (goal_x, goal_y)
-        # self._logger.warn(f"Beta: {beta} Theta: {theta} Alpha: {alpha} Alpha_norm: {alpha_norm}")
-        if abs(alpha_norm) > math.radians(30) and not is_goal_target:          
-            # self._logger.warn(f"Beta: {beta} Theta: {theta} Alpha: {alpha} Alpha_norm: {alpha_norm}")
+        if abs(alpha_norm) > math.radians(30) and not is_goal_target:
             w = 0.6 * np.sign(alpha_norm)
             v = 0.0
         return v, w
@@ -111,5 +112,5 @@ class PurePursuit:
         for i in range(origin_idx, len(self._path)):
             if math.dist(origin_xy, self.path[i]) >= self._lookahead_distance:
                 return self.path[i]
-                
+
         return self.path[-1]

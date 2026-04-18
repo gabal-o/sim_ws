@@ -5,6 +5,7 @@ import math
 
 
 def generate_launch_description():
+    """Create the launch description for the Lab 03 scenario."""
     simulation = True
     world = "lab03"
     start = (0.0, -0.8, math.radians(90))

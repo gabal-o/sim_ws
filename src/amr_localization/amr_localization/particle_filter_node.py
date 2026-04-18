@@ -17,6 +17,8 @@ from amr_localization.particle_filter import ParticleFilter
 
 
 class ParticleFilterNode(LifecycleNode):
+    """Lifecycle node that runs the particle filter."""
+
     def __init__(self):
         """Particle filter node initializer."""
         super().__init__("particle_filter")
@@ -26,7 +28,8 @@ class ParticleFilterNode(LifecycleNode):
         self.declare_parameter("enable_plot", False)
         self.declare_parameter("global_localization", True)
         self.declare_parameter("initial_pose", (0.0, 0.0, math.radians(0)))
-        self.declare_parameter("initial_pose_sigma", (0.05, 0.05, math.radians(5)))
+        self.declare_parameter("initial_pose_sigma",
+                               (0.05, 0.05, math.radians(5)))
         self.declare_parameter("min_median_likelihood", 5.0)
         self.declare_parameter("particles", 1000)
         self.declare_parameter("sigma_v", 0.1)
@@ -44,17 +47,21 @@ class ParticleFilterNode(LifecycleNode):
             state: Current lifecycle state.
 
         """
-        self.get_logger().info(f"Transitioning from '{state.label}' to 'inactive' state.")
+        self.get_logger().info(
+            f"Transitioning from '{state.label}' to 'inactive' state.")
 
         try:
             # Parameters
             dt = self.get_parameter("dt").get_parameter_value().double_value
-            self._enable_plot = self.get_parameter("enable_plot").get_parameter_value().bool_value
+            self._enable_plot = self.get_parameter(
+                "enable_plot").get_parameter_value().bool_value
             global_localization = (
-                self.get_parameter("global_localization").get_parameter_value().bool_value
+                self.get_parameter(
+                    "global_localization").get_parameter_value().bool_value
             )
             initial_pose = tuple(
-                self.get_parameter("initial_pose").get_parameter_value().double_array_value.tolist()
+                self.get_parameter("initial_pose").get_parameter_value(
+                ).double_array_value.tolist()
             )
             initial_pose_sigma = tuple(
                 self.get_parameter("initial_pose_sigma")
@@ -62,25 +69,38 @@ class ParticleFilterNode(LifecycleNode):
                 .double_array_value.tolist()
             )
             self._min_median_likelihood = (
-                self.get_parameter("min_median_likelihood").get_parameter_value().double_value
+                self.get_parameter(
+                    "min_median_likelihood").get_parameter_value().double_value
             )
-            self._low_likelihood_max_count = self.get_parameter("low_likelihood_max_count").get_parameter_value().integer_value
+            self._low_likelihood_max_count = (
+                self.get_parameter("low_likelihood_max_count")
+                .get_parameter_value()
+                .integer_value
+            )
             self._low_likelihood_count = 0
-            particles = self.get_parameter("particles").get_parameter_value().integer_value
-            sigma_v = self.get_parameter("sigma_v").get_parameter_value().double_value
-            sigma_w = self.get_parameter("sigma_w").get_parameter_value().double_value
-            sigma_z = self.get_parameter("sigma_z").get_parameter_value().double_value
+            particles = self.get_parameter(
+                "particles").get_parameter_value().integer_value
+            sigma_v = self.get_parameter(
+                "sigma_v").get_parameter_value().double_value
+            sigma_w = self.get_parameter(
+                "sigma_w").get_parameter_value().double_value
+            sigma_z = self.get_parameter(
+                "sigma_z").get_parameter_value().double_value
             self._steps_btw_sense_updates = (
-                self.get_parameter("steps_btw_sense_updates").get_parameter_value().integer_value
+                self.get_parameter(
+                    "steps_btw_sense_updates").get_parameter_value().integer_value
             )
-            self._simulation = self.get_parameter("simulation").get_parameter_value().bool_value
-            world = self.get_parameter("world").get_parameter_value().string_value
+            self._simulation = self.get_parameter(
+                "simulation").get_parameter_value().bool_value
+            world = self.get_parameter(
+                "world").get_parameter_value().string_value
 
             # Attribute and object initializations
             self._localized = False
             self._steps = 0
             map_path = os.path.realpath(
-                os.path.join(os.path.dirname(__file__), "..", "maps", world + ".json")
+                os.path.join(os.path.dirname(__file__),
+                             "..", "maps", world + ".json")
             )
             self._particle_filter = ParticleFilter(
                 dt,
@@ -101,13 +121,11 @@ class ParticleFilterNode(LifecycleNode):
 
             # Publishers
             # TODO: 3.1. Create the /pose publisher (PoseStamped message).
-            
             self._pose_publisher = self.create_publisher(
                 msg_type=PoseStamped,
                 topic="pose",
-                qos_profile=10
+                qos_profile=10,
             )
-            
 
             # Subscribers
             scan_qos_profile = QoSProfile(
@@ -118,9 +136,14 @@ class ParticleFilterNode(LifecycleNode):
             )
 
             self._subscribers: list[message_filters.Subscriber] = []
-            self._subscribers.append(message_filters.Subscriber(self, Odometry, "odometry", qos_profile=scan_qos_profile))
             self._subscribers.append(
-                message_filters.Subscriber(self, LaserScan, "scan", qos_profile=scan_qos_profile)
+                message_filters.Subscriber(
+                    self, Odometry, "odometry", qos_profile=scan_qos_profile
+                )
+            )
+            self._subscribers.append(
+                message_filters.Subscriber(
+                    self, LaserScan, "scan", qos_profile=scan_qos_profile)
             )
 
             ts = message_filters.ApproximateTimeSynchronizer(
@@ -141,7 +164,8 @@ class ParticleFilterNode(LifecycleNode):
             state: Current lifecycle state.
 
         """
-        self.get_logger().info(f"Transitioning from '{state.label}' to 'active' state.")
+        self.get_logger().info(
+            f"Transitioning from '{state.label}' to 'active' state.")
 
         return super().on_activate(state)
 
@@ -191,15 +215,17 @@ class ParticleFilterNode(LifecycleNode):
             self._localized, pose = self._particle_filter.compute_pose()
             clustering_time = time.perf_counter() - start_time
 
-            self.get_logger().info(f"Clustering time: {clustering_time:6.3f} s")
-            self.get_logger().info(f"median likelihood: {self._particle_filter.median_likelihood}")
+            self.get_logger().info(
+                f"Clustering time: {clustering_time:6.3f} s")
+            self.get_logger().info(
+                f"median likelihood: {self._particle_filter.median_likelihood}")
 
             if self._localized:
                 if self._particle_filter.median_likelihood < self._min_median_likelihood:
                     self._low_likelihood_count += 1
                 else:
                     self._low_likelihood_count = 0
-                
+
                 if self._low_likelihood_count >= self._low_likelihood_max_count:
                     self.get_logger().warn("Low median likelihood. Resetting particle filter.")
                     self._particle_filter.reset()
@@ -207,7 +233,6 @@ class ParticleFilterNode(LifecycleNode):
                     self._steps = 0
                     pose = (float("inf"), float("inf"), float("inf"))
                     self._low_likelihood_count = 0
-                
 
         return pose
 
@@ -237,22 +262,22 @@ class ParticleFilterNode(LifecycleNode):
 
         """
         # TODO: 3.2. Complete the function body with your code (i.e., replace the pass statement).
-        new_msg = PoseStamped() 
+        new_msg = PoseStamped()
         new_msg.header.stamp = self.get_clock().now().to_msg()
         new_msg.localized = self._localized
         if self._localized:
             new_msg.pose.position.x = x_h
             new_msg.pose.position.y = y_h
-            w,x,y,z = euler2quat(0, 0, theta_h)
-            new_msg.pose.orientation.w = w  
-            new_msg.pose.orientation.x = x  
-            new_msg.pose.orientation.y = y  
-            new_msg.pose.orientation.z = z  
+            w, x, y, z = euler2quat(0, 0, theta_h)
+            new_msg.pose.orientation.w = w
+            new_msg.pose.orientation.x = x
+            new_msg.pose.orientation.y = y
+            new_msg.pose.orientation.z = z
         self._pose_publisher.publish(new_msg)
-            
-        
+
 
 def main(args=None):
+    """Run the particle filter node."""
     rclpy.init(args=args)
     particle_filter_node = ParticleFilterNode()
 

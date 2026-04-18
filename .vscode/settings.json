@@ -26,4 +26,9 @@
         "**/log": true
     },
     "ROS2.distro": "humble",
+    "python.testing.pytestArgs": [
+        "src"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
 }

@@ -42,7 +42,8 @@ class Map:
         self._map_polygon = Polygon(boundary, holes=holes)
 
         # Create a safe map by enlarging obstacles
-        self._safe_map_polygon = self._map_polygon.buffer(-safety_distance, single_sided=True)
+        self._safe_map_polygon = self._map_polygon.buffer(
+            -safety_distance, single_sided=True)
 
         # Create a segment map
         self._map_segments = []
@@ -151,13 +152,17 @@ class Map:
 
             if (compute_distance and intersections) or len(intersections) > 1:
                 distances = [
-                    math.sqrt((pt[0] - segment[0][0]) ** 2 + (pt[1] - segment[0][1]) ** 2)
+                    math.sqrt(
+                        (pt[0] - segment[0][0]) ** 2 +
+                        (pt[1] - segment[0][1]) ** 2
+                    )
                     for pt in intersections
                 ]
                 index = int(np.argmin(distances))
                 distance = distances[index]
         except IndexError:
-            pass  # Sensor rays may be outside the map even if the center of the robot is within it.
+            # Sensor rays may be outside the map even if the center of the robot is within it.
+            pass
 
         intersection = intersections[index] if intersections else []
 
@@ -213,8 +218,10 @@ class Map:
         """
         x_min, y_min, x_max, y_max = self.bounds()
 
-        major_ticks = np.arange(min(x_min, y_min), max(x_max, y_max) + 0.01, 0.4)
-        minor_ticks = np.arange(min(x_min, y_min), max(x_max, y_max) + 0.01, 0.2)
+        major_ticks = np.arange(
+            min(x_min, y_min), max(x_max, y_max) + 0.01, 0.4)
+        minor_ticks = np.arange(
+            min(x_min, y_min), max(x_max, y_max) + 0.01, 0.2)
 
         axes.set_xticks(major_ticks)
         axes.set_xticks(minor_ticks, minor=True)
@@ -228,19 +235,23 @@ class Map:
 
         # Plot map
         x, y = self._safe_map_polygon.exterior.xy
-        axes.plot(x, y, color="gray", alpha=1, linewidth=3, solid_capstyle="round", zorder=2)
+        axes.plot(x, y, color="gray", alpha=1, linewidth=3,
+                  solid_capstyle="round", zorder=2)
 
         x, y = self._map_polygon.exterior.xy
-        axes.plot(x, y, color="black", alpha=1, linewidth=3, solid_capstyle="round", zorder=3)
+        axes.plot(x, y, color="black", alpha=1, linewidth=3,
+                  solid_capstyle="round", zorder=3)
 
         for interior, safe_interior in zip(
             self._map_polygon.interiors, self._safe_map_polygon.interiors
         ):
             x, y = safe_interior.xy
-            axes.plot(x, y, color="gray", alpha=1, linewidth=3, solid_capstyle="round", zorder=2)
+            axes.plot(x, y, color="gray", alpha=1, linewidth=3,
+                      solid_capstyle="round", zorder=2)
 
             x, y = interior.xy
-            axes.plot(x, y, color="black", alpha=1, linewidth=3, solid_capstyle="round", zorder=3)
+            axes.plot(x, y, color="black", alpha=1, linewidth=3,
+                      solid_capstyle="round", zorder=3)
 
         return axes
 
@@ -264,7 +275,8 @@ class Map:
             save_dir: Image save directory.
 
         """
-        figure, axes = plt.subplots(1, 1, figsize=figure_size, num=figure_number)
+        figure, axes = plt.subplots(
+            1, 1, figsize=figure_size, num=figure_number)
         axes = self.plot(axes)
         axes.set_title(f"Map ({title})")
         figure.tight_layout()  # Reduce white margins
@@ -273,7 +285,8 @@ class Map:
         plt.pause(0.0001)  # Wait for 0.1 ms or the figure won't be displayed
 
         if save_figure:
-            save_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", save_dir))
+            save_path = os.path.realpath(os.path.join(
+                os.path.dirname(__file__), "..", save_dir))
 
             if not os.path.isdir(save_path):
                 os.makedirs(save_path)
@@ -330,7 +343,8 @@ class Map:
         for ax in axes.flat:
             ax.set_xlabel("x [m]", fontsize="small")
             ax.set_ylabel("y [m]", fontsize="small")
-            ax.label_outer()  # Hide x and tick labels for top plots and y ticks for right plots.
+            # Hide x and tick labels for top plots and y ticks for right plots.
+            ax.label_outer()
 
             ax.set_xticks(major_ticks)
             ax.set_yticks(major_ticks)
@@ -346,7 +360,8 @@ class Map:
 
         for y in np.arange(y_max - 0.5, y_min, -1):
             for x in np.arange(x_min + 0.5, x_max):
-                circle = Point(x, y).buffer(self._sensor_range + 1 / math.sqrt(2))
+                circle = Point(x, y).buffer(
+                    self._sensor_range + 1 / math.sqrt(2))
                 cx, cy = circle.exterior.xy
 
                 r, c = m._xy_to_rc((x, y))
@@ -369,7 +384,8 @@ class Map:
         plt.show(block=block)
 
         if save_figure:
-            save_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", save_dir))
+            save_path = os.path.realpath(os.path.join(
+                os.path.dirname(__file__), "..", save_dir))
 
             if not os.path.isdir(save_path):
                 os.makedirs(save_path)
@@ -390,7 +406,8 @@ class Map:
             "Linux": "libintersect.so",
         }
 
-        library_path = os.path.join(os.path.dirname(__file__), library_names[platform.system()])
+        library_path = os.path.join(os.path.dirname(
+            __file__), library_names[platform.system()])
         intersect = ct.CDLL(library_path)
 
         # Initialize function arguments and return value types
@@ -431,7 +448,8 @@ class Map:
 
         for y in np.arange(y_max - 0.5, y_min, -1):
             for x in np.arange(x_min + 0.5, x_max):
-                circle = Point(x, y).buffer(self._sensor_range + 1 / math.sqrt(2))
+                circle = Point(x, y).buffer(
+                    self._sensor_range + 1 / math.sqrt(2))
                 segments = []
 
                 for segment in self._map_segments:
@@ -468,9 +486,12 @@ if __name__ == "__main__":
     # Display the full map and its regions
     map_name = "project"
     map_path = os.path.realpath(
-        os.path.join(os.path.dirname(__file__), "..", "maps", map_name + ".json")
+        os.path.join(os.path.dirname(__file__), "..",
+                     "maps", map_name + ".json")
     )
 
     m = Map(map_path, sensor_range=8.0, safety_distance=0.08)
-    m.show(title=map_name, figure_number=1, block=False, figure_size=(8, 8), save_figure=True)
-    m.show_regions(title=map_name, figure_number=2, figure_size=(8, 8), save_figure=True)
+    m.show(title=map_name, figure_number=1, block=False,
+           figure_size=(8, 8), save_figure=True)
+    m.show_regions(title=map_name, figure_number=2,
+                   figure_size=(8, 8), save_figure=True)

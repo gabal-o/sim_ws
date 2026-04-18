@@ -14,6 +14,8 @@ from amr_control.wall_follower import WallFollower
 
 
 class WallFollowerNode(LifecycleNode):
+    """Lifecycle node that runs the wall-following controller."""
+
     def __init__(self):
         """Wall follower node initializer."""
         super().__init__("wall_follower")
@@ -30,15 +32,18 @@ class WallFollowerNode(LifecycleNode):
             state: Current lifecycle state.
 
         """
-        self.get_logger().info(f"Transitioning from '{state.label}' to 'inactive' state.")
+        self.get_logger().info(
+            f"Transitioning from '{state.label}' to 'inactive' state.")
 
         try:
             # Parameters
             dt = self.get_parameter("dt").get_parameter_value().double_value
             enable_localization = (
-                self.get_parameter("enable_localization").get_parameter_value().bool_value
+                self.get_parameter(
+                    "enable_localization").get_parameter_value().bool_value
             )
-            self._simulation = self.get_parameter("simulation").get_parameter_value().bool_value
+            self._simulation = self.get_parameter(
+                "simulation").get_parameter_value().bool_value
 
             # Attribute and object initializations
             self._wall_follower = WallFollower(
@@ -49,7 +54,8 @@ class WallFollowerNode(LifecycleNode):
 
             # Publishers
             # TODO: 2.10. Create the /cmd_vel velocity commands publisher (TwistStamped message).
-            self._cmd_vel_publisher = self.create_publisher(TwistStamped, "cmd_vel", 10)
+            self._cmd_vel_publisher = self.create_publisher(
+                TwistStamped, "cmd_vel", 10)
             # Subscribers
             # TODO: 2.7. Synchronize _compute_commands_callback with /odometry and /scan.
             self._subscribers: list[message_filters.Subscriber] = []
@@ -58,7 +64,7 @@ class WallFollowerNode(LifecycleNode):
                 durability=QoSDurabilityPolicy.VOLATILE,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=10
-                )
+            )
             # Append as many topics as needed
             self._subscribers.append(
                 message_filters.Subscriber(
@@ -78,16 +84,15 @@ class WallFollowerNode(LifecycleNode):
                 )
             )
 
-            
             # TODO: 4.12. Add /pose to the synced subscriptions only if localization is enabled.
             if enable_localization:
                 self._subscribers.append(
                     message_filters.Subscriber(
-                    self,
-                    PoseStamped,
-                    "pose",
-                    qos_profile=qos
-                )
+                        self,
+                        PoseStamped,
+                        "pose",
+                        qos_profile=qos
+                    )
                 )
 
             ts = message_filters.ApproximateTimeSynchronizer(
@@ -109,7 +114,8 @@ class WallFollowerNode(LifecycleNode):
             state: Current lifecycle state.
 
         """
-        self.get_logger().info(f"Transitioning from '{state.label}' to 'active' state.")
+        self.get_logger().info(
+            f"Transitioning from '{state.label}' to 'active' state.")
 
         return super().on_activate(state)
 
@@ -129,14 +135,15 @@ class WallFollowerNode(LifecycleNode):
         if not pose_msg.localized:
             # TODO: 2.8. Parse the odometry from the Odometry message (i.e., read z_v and z_w).
             z_v: float = odom_msg.twist.twist.linear.x
-            z_w: float = odom_msg.twist.twist.angular.z 
-            
+            z_w: float = odom_msg.twist.twist.angular.z
+
             # TODO: 2.9. Parse LiDAR measurements from the LaserScan message (i.e., read z_scan).
             z_scan: list[float] = scan_msg.ranges
-            
+
             # Execute wall follower
             v, w = self._wall_follower.compute_commands(z_scan, z_v, z_w)
-            self.get_logger().info(f"Commands: v = {v:.3f} m/s, w = {w:+.3f} rad/s")
+            self.get_logger().info(
+                f"Commands: v = {v:.3f} m/s, w = {w:+.3f} rad/s")
 
             # Publish
             self._publish_velocity_commands(v, w)
@@ -155,9 +162,10 @@ class WallFollowerNode(LifecycleNode):
         new_msg.twist.linear.x = float(v)
         new_msg.twist.angular.z = float(w)
         self._cmd_vel_publisher.publish(new_msg)
-        
+
 
 def main(args=None):
+    """Run the wall follower node."""
     rclpy.init(args=args)
     wall_follower_node = WallFollowerNode()
 

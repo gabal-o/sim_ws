@@ -36,13 +36,16 @@ class CoppeliaSim:
         self.stop_simulation(compute_statistics=False)
 
         # Start a new simulation
-        self._sim.setStepping(True)  # Must be set after stopping the simulation
+        # Must be set after stopping the simulation
+        self._sim.setStepping(True)
         self._sim.startSimulation()
-        self.next_step(increment_step=False)  # Wait for the simulation to start
+        # Wait for the simulation to start
+        self.next_step(increment_step=False)
 
         # Create the robot
         self._robot_handle = self._create_robot(start)
-        self.next_step(increment_step=False)  # Wait for the robot to be created
+        # Wait for the robot to be created
+        self.next_step(increment_step=False)
 
         # Wait one second to allow other nodes to properly initialize
         time.sleep(1)
@@ -80,13 +83,15 @@ class CoppeliaSim:
 
         """
         real_position = self._sim.getObjectPosition(self._robot_handle, -1)
-        real_orientation = self._sim.getObjectOrientation(self._robot_handle, -1)
+        real_orientation = self._sim.getObjectOrientation(
+            self._robot_handle, -1)
 
         position_error = math.dist(real_position[0:2], (x, y))
         angle_error = (
             math.degrees(
                 math.atan2(
-                    math.sin(real_orientation[2] - theta), math.cos(real_orientation[2] - theta)
+                    math.sin(
+                        real_orientation[2] - theta), math.cos(real_orientation[2] - theta)
                 )
             )
             if theta is not None
@@ -94,7 +99,8 @@ class CoppeliaSim:
         )
         real_pose = (real_position[0], real_position[1], real_orientation[2])
         within_tolerance = position_error <= self._pose_tolerance[0] and (
-            abs(angle_error) <= self._pose_tolerance[1] if angle_error else True
+            abs(
+                angle_error) <= self._pose_tolerance[1] if angle_error else True
         )
 
         return real_pose, position_error, angle_error, within_tolerance
@@ -143,7 +149,8 @@ class CoppeliaSim:
             Robot handle.
 
         """
-        script_handle = self._sim.getScript(self._sim.scripttype_simulation, "CreateRobot")
+        script_handle = self._sim.getScript(
+            self._sim.scripttype_simulation, "CreateRobot")
 
         out_ints, _, _, _ = self._sim.callScriptFunction(
             "run", script_handle, [], pose, ["turtlebot3_burger.ttm"], ""
