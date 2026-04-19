@@ -172,16 +172,17 @@ class CoppeliaSimNode(LifecycleNode):
 
     def _check_estimated_pose(self, pose_msg: PoseStamped = PoseStamped()) -> None:
         """If the robot is localized, compares the estimated and real poses.
-
+ 
         Outputs a ROS log message to the Terminal with the estimated pose upon localization and
         another with the real and estimated values thereafter for monitoring purposes.
-
+ 
         Args:
             pose_msg: Message containing the estimated robot pose.
-
+ 
         """
+        prev_localized = self._localized
         self._localized = pose_msg.localized
-
+ 
         if self._localized:
             x_h = pose_msg.pose.position.x
             y_h = pose_msg.pose.position.y
@@ -189,34 +190,33 @@ class CoppeliaSimNode(LifecycleNode):
             quat_x = pose_msg.pose.orientation.x
             quat_y = pose_msg.pose.orientation.y
             quat_z = pose_msg.pose.orientation.z
-
+ 
             _, _, th_h = quat2euler((quat_w, quat_x, quat_y, quat_z))
             th_h %= 2 * math.pi
             th_h_deg = math.degrees(th_h)
-
+ 
             real_pose, position_error, angle_error, within_tolerance = (
                 self._coppeliasim.check_position(x_h, y_h, th_h)
             )
             x, y, th = real_pose
             th %= 2 * math.pi
             th_deg = math.degrees(th)
-
-            self.get_logger().warn(
-                f"Localized at x = {x_h:.2f} m, y = {y_h:.2f} m, "
-                f"th = {th_h:.2f} rad ({th_h_deg:.1f}º) | "
-                f"Real pose: x = {x:.2f} m, y = {y:.2f} m, th = {th:.2f} rad ({th_deg:.1f}º) | "
-                f"Error{' (OK)' if within_tolerance else ' (ERROR)'}: "
-                f"{position_error:.3f} m, {angle_error:.1f}º",
-                once=True,  # Log only the first time this function is hit
-            )
-
+ 
+            if not prev_localized:
+                self.get_logger().warn(
+                    f"Localized at x = {x_h:.2f} m, y = {y_h:.2f} m, "
+                    f"th = {th_h:.2f} rad ({th_h_deg:.1f}º) | "
+                    f"Real pose: x = {x:.2f} m, y = {y:.2f} m, th = {th:.2f} rad ({th_deg:.1f}º) | "
+                    f"Error{' (OK)' if within_tolerance else ' (ERROR)'}: "
+                    f"{position_error:.3f} m, {angle_error:.1f}º"
+                )
+ 
             self.get_logger().info(
                 f"Estimated: x = {x_h:.2f} m, y = {y_h:.2f} m, "
                 f"th = {th_h:.2f} rad ({th_h_deg:.1f}º) | "
                 f"Real pose: x = {x:.2f} m, y = {y:.2f} m, th = {th:.2f} rad ({th_deg:.1f}º) | "
                 f"Error{' (OK)' if within_tolerance else ' (ERROR)'}: "
-                f"{position_error:.3f} m, {angle_error:.1f}º",
-                skip_first=True,  # Log all but the first time this function is hit
+                f"{position_error:.3f} m, {angle_error:.1f}º"
             )
 
     def _check_goal(self) -> bool:

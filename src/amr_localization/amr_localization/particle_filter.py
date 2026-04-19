@@ -65,6 +65,13 @@ class ParticleFilter:
         self._sigma_z: float = sigma_z
         self._simulation: bool = simulation
         self._iteration: int = 0
+        self._reset_theta_offsets: tuple[float, ...] = (
+            0.0,
+            math.pi / 2,
+            math.pi,
+            3 * math.pi / 2,
+        )
+        self._reset_theta_sigma: float = math.pi / 8
 
         self._map = Map(
             map_path,
@@ -243,14 +250,24 @@ class ParticleFilter:
         weights_unnormalized = np.array([weights_unnormalized[i] for i in idx])
         self._median_likelihood = float(np.median(weights_unnormalized))
 
-    def reset(self) -> None:
-        """Reinitialize the particle set with the original configuration."""
-        self._particles = self._init_particles(
-            self._initial_particle_count,
-            self._global_localization,
-            self._initial_pose,
-            self._initial_pose_sigma,
-        )
+    def reset(self, theta_hint: float | None = None) -> None:
+        """Reinitialize the particle set after localization degrades.
+
+        Args:
+            theta_hint: Heading estimate used to bias the reset orientations [rad].
+                Particles are still drawn across the full map in x and y.
+        """
+        if self._global_localization and theta_hint is not None:
+            self._particles = self._init_global_particles_with_theta_hint(
+                3000, theta_hint
+            )
+        else:
+            self._particles = self._init_particles(
+                self._initial_particle_count,
+                self._global_localization,
+                self._initial_pose,
+                self._initial_pose_sigma,
+            )
         self._particle_count = self._initial_particle_count
         self._median_likelihood = float("inf")
 
@@ -383,6 +400,38 @@ class ParticleFilter:
                 theta = np.random.normal(
                     initial_pose[2], initial_pose_sigma[2])
                 particles[i] = (x, y, theta % (2 * math.pi))
+
+        return particles
+
+    def _init_global_particles_with_theta_hint(
+        self, particle_count: int, theta_hint: float
+    ) -> np.ndarray:
+        """Draws global particles while biasing theta around a heading hint.
+
+        Particle positions are sampled across the whole map. Headings are drawn
+        around theta_hint and its pi/2 symmetries with Gaussian noise.
+
+        Args:
+            particle_count: Number of particles.
+            theta_hint: Heading estimate used as the orientation reference [rad].
+
+        Returns:
+            A NumPy array of tuples (x, y, theta) [m, m, rad].
+        """
+        particles = np.empty((particle_count, 3), dtype=object)
+        xmin, ymin, xmax, ymax = self._map.bounds()
+
+        for i in range(particle_count):
+            x = np.random.uniform(xmin, xmax)
+            y = np.random.uniform(ymin, ymax)
+
+            while not self._map.contains((x, y)):
+                x = np.random.uniform(xmin, xmax)
+                y = np.random.uniform(ymin, ymax)
+
+            theta_center = theta_hint + random.choice(self._reset_theta_offsets)
+            theta = np.random.normal(theta_center, self._reset_theta_sigma)
+            particles[i] = (x, y, theta % (2 * math.pi))
 
         return particles
 

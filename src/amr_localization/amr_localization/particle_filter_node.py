@@ -97,6 +97,7 @@ class ParticleFilterNode(LifecycleNode):
 
             # Attribute and object initializations
             self._localized = False
+            self._last_pose_estimate = None
             self._steps = 0
             map_path = os.path.realpath(
                 os.path.join(os.path.dirname(__file__),
@@ -221,6 +222,7 @@ class ParticleFilterNode(LifecycleNode):
                 f"median likelihood: {self._particle_filter.median_likelihood}")
 
             if self._localized:
+                self._last_pose_estimate = pose
                 if self._particle_filter.median_likelihood < self._min_median_likelihood:
                     self._low_likelihood_count += 1
                 else:
@@ -228,7 +230,7 @@ class ParticleFilterNode(LifecycleNode):
 
                 if self._low_likelihood_count >= self._low_likelihood_max_count:
                     self.get_logger().warn("Low median likelihood. Resetting particle filter.")
-                    self._particle_filter.reset()
+                    self._particle_filter.reset(theta_hint=self._last_pose_estimate[2])
                     self._localized = False
                     self._steps = 0
                     pose = (float("inf"), float("inf"), float("inf"))

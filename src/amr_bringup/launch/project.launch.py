@@ -8,8 +8,8 @@ def generate_launch_description():
     """Create the launch description for the project scenario."""
     simulation = True
     world = "project"
-    start = (1.0, 1.0, math.radians(90))
-    goal = (0.2, -0.6)
+    start = (-0.6, 0.2, math.radians(180))
+    goal = (-0.6, 1)
 
     particle_filter_node = LifecycleNode(
         package="amr_localization",
@@ -20,7 +20,7 @@ def generate_launch_description():
         arguments=["--ros-args", "--log-level", "WARN"],
         parameters=[
             {
-                "enable_plot": False,
+                "enable_plot": True,
                 "global_localization": True,
                 "particles": 2500,  # 2000
                 "sigma_v": 0.05,  # 0.05
